@@ -41,14 +41,14 @@ class Amazon:
         for span in span_elements:
             unique_spans.add(span.text.strip())
 
-        # Return the unique spans as a string
-        self.departaments = "\n".join(unique_spans)
+        # Return the unique spans as a list
+        self.departaments = list(unique_spans)
         return self.departaments
 
     ################################################################################
     def is_departament(self, departament):
         """ Method to check if a departament is in the offer of the day """
-        return departament[0].upper() + departament[1:].lower() in self.departaments
+        return departament.lower() in [d.lower() for d in self.departaments]
         
     ################################################################################
     def get_unique_spans(self):
