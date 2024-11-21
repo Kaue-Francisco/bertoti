@@ -3,6 +3,7 @@
 
 # Selenium
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -127,7 +128,7 @@ class Amazon:
                     product_links_set.add(product_link)
             except Exception as e:
                 continue
-                
+                    
         return products
 
     def get_products_of_departament(self, departament):
@@ -144,3 +145,63 @@ class Amazon:
             return []
 
         return self.get_product_details(products_container)
+    
+    ################################################################################
+    def get_top_products(self, product_name, max_products=5):
+        """Get the top products based on the search query, including name, link, image, and price."""
+        self.driver.get('https://www.amazon.com.br/')
+        search_box = self.driver.find_element(By.ID, 'twotabsearchtextbox')
+        search_box.send_keys(product_name)
+        search_box.send_keys(Keys.RETURN)
+
+        try:
+            # Wait for the products to load
+            products_container = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, 'div.s-main-slot.s-result-list'))
+            )
+            
+            # Locate all product divs within the container
+            product_divs = products_container.find_elements(By.XPATH, '//div[@data-component-type="s-search-result"]')
+
+            products = []
+            for div in product_divs[:max_products]:
+                try:
+                    # Extract product link
+                    link_element = div.find_element(By.CSS_SELECTOR, 'h2 a')
+                    product_link = link_element.get_attribute('href')
+
+                    # Extract product image
+                    img_element = div.find_element(By.CSS_SELECTOR, 'img.s-image')
+                    product_image = img_element.get_attribute('src')
+
+                    # Extract product name
+                    product_name = link_element.text.strip() if link_element.text else "No Name"
+
+                    # Extract product price using adjusted CSS selectors
+                    try:
+                        # Locate price elements
+                        price_whole_element = div.find_element(By.CSS_SELECTOR, 'span.a-price-whole')
+                        price_fraction_element = div.find_element(By.CSS_SELECTOR, 'span.a-price-fraction')
+                        
+                        # Concatenate the whole and fractional parts of the price
+                        product_price = f"{price_whole_element.text.strip()},{price_fraction_element.text.strip()}"
+                    except Exception as e:
+                        print(f"Price not found for {product_name}: {e}")
+                        product_price = "Price not available"
+
+                    # Append the product data to the list
+                    products.append({
+                        'name': product_name,
+                        'link': product_link,
+                        'image': product_image,
+                        'price': product_price
+                    })
+                except Exception as e:
+                    print(f"Error processing product: {e}")
+                    continue
+
+            return products
+
+        except Exception as e:
+            print(f"Error loading products: {e}")
+            return []
