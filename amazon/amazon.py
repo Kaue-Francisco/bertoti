@@ -198,7 +198,7 @@ class Amazon:
                     })
                 except Exception as e:
                     print(f"Error processing product: {e}")
-                    continue
+                    return []
 
             return products
 
